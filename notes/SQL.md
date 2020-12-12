@@ -6,14 +6,24 @@
 * [五、更新](#五更新)
 * [六、删除](#六删除)
 * [七、查询](#七查询)
+    * [DISTINCT](#distinct)
+    * [LIMIT](#limit)
 * [八、排序](#八排序)
 * [九、过滤](#九过滤)
 * [十、通配符](#十通配符)
 * [十一、计算字段](#十一计算字段)
 * [十二、函数](#十二函数)
+    * [汇总](#汇总)
+    * [文本处理](#文本处理)
+    * [日期和时间处理](#日期和时间处理)
+    * [数值处理](#数值处理)
 * [十三、分组](#十三分组)
 * [十四、子查询](#十四子查询)
 * [十五、连接](#十五连接)
+    * [内连接](#内连接)
+    * [自连接](#自连接)
+    * [自然连接](#自然连接)
+    * [外连接](#外连接)
 * [十六、组合查询](#十六组合查询)
 * [十七、视图](#十七视图)
 * [十八、存储过程](#十八存储过程)
@@ -30,7 +40,7 @@
 
 模式定义了数据如何存储、存储什么样的数据以及数据如何分解等信息，数据库和表都有模式。
 
-主键的值不允许修改，也不允许复用（不能使用已经删除的主键值赋给新数据行的主键）。
+主键的值不允许修改，也不允许复用（不能将已经删除的主键值赋给新数据行的主键）。
 
 SQL（Structured Query Language)，标准 SQL 由 ANSI 标准委员会管理，从而称为 ANSI SQL。各个 DBMS 都有自己的实现，如 PL/SQL、Transact-SQL 等。
 
@@ -57,10 +67,15 @@ USE test;
 
 ```sql
 CREATE TABLE mytable (
+  # int 类型，不为空，自增
   id INT NOT NULL AUTO_INCREMENT,
+  # int 类型，不可为空，默认值为 1，不为空
   col1 INT NOT NULL DEFAULT 1,
+  # 变长字符串类型，最长为 45 个字符，可以为空
   col2 VARCHAR(45) NULL,
+  # 日期类型，可为空
   col3 DATE NULL,
+  # 设置主键为 id
   PRIMARY KEY (`id`));
 ```
 
@@ -125,7 +140,7 @@ DELETE FROM mytable
 WHERE id = 1;
 ```
 
-**TRUNCATE TABLE**  可以清空表，也就是删除所有行。
+**TRUNCATE TABLE**   可以清空表，也就是删除所有行。
 
 ```sql
 TRUNCATE TABLE mytable;
@@ -172,8 +187,8 @@ LIMIT 2, 3;
 
 # 八、排序
 
--  **ASC** ：升序（默认）
--  **DESC** ：降序
+-   **ASC**  ：升序（默认）
+-   **DESC**  ：降序
 
 可以按多个列进行排序，并且为每个列指定不同的排序方式：
 
@@ -208,21 +223,21 @@ WHERE col IS NULL;
 
 应该注意到，NULL 与 0、空字符串都不同。
 
-**AND 和 OR**  用于连接多个过滤条件。优先处理 AND，当一个过滤表达式涉及到多个 AND 和 OR 时，可以使用 () 来决定优先级，使得优先级关系更清晰。
+**AND 和 OR**   用于连接多个过滤条件。优先处理 AND，当一个过滤表达式涉及到多个 AND 和 OR 时，可以使用 () 来决定优先级，使得优先级关系更清晰。
 
-**IN**  操作符用于匹配一组值，其后也可以接一个 SELECT 子句，从而匹配子查询得到的一组值。
+**IN**   操作符用于匹配一组值，其后也可以接一个 SELECT 子句，从而匹配子查询得到的一组值。
 
-**NOT**  操作符用于否定一个条件。
+**NOT**   操作符用于否定一个条件。
 
 # 十、通配符
 
 通配符也是用在过滤语句中，但它只能用于文本字段。
 
--  **%**  匹配 >=0 个任意字符；
+-   **%**   匹配 \>=0 个任意字符；
 
--  **\_**  匹配 ==1 个任意字符；
+-   **\_**   匹配 ==1 个任意字符；
 
--  **[ ]**  可以匹配集合内的字符，例如 [ab] 将匹配字符 a 或者 b。用脱字符 ^ 可以对其进行否定，也就是不匹配集合内的字符。
+-   **[ ]**   可以匹配集合内的字符，例如 [ab] 将匹配字符 a 或者 b。用脱字符 ^ 可以对其进行否定，也就是不匹配集合内的字符。
 
 使用 Like 来进行通配符匹配。
 
@@ -238,14 +253,14 @@ WHERE col LIKE '[^AB]%'; -- 不以 A 和 B 开头的任意文本
 
 在数据库服务器上完成数据的转换和格式化的工作往往比客户端上快得多，并且转换和格式化后的数据量更少的话可以减少网络通信量。
 
-计算字段通常需要使用  **AS**  来取别名，否则输出的时候字段名为计算表达式。
+计算字段通常需要使用   **AS**   来取别名，否则输出的时候字段名为计算表达式。
 
 ```sql
 SELECT col1 * col2 AS alias
 FROM mytable;
 ```
 
-**CONCAT()**  用于连接两个字段。许多数据库会使用空格把一个值填充为列宽，因此连接的结果会出现一些不必要的空格，使用 **TRIM()** 可以去除首尾空格。
+**CONCAT()**   用于连接两个字段。许多数据库会使用空格把一个值填充为列宽，因此连接的结果会出现一些不必要的空格，使用 **TRIM()** 可以去除首尾空格。
 
 ```sql
 SELECT CONCAT(TRIM(col1), '(', TRIM(col2), ')') AS concat_col
@@ -268,7 +283,7 @@ FROM mytable;
 
 AVG() 会忽略 NULL 行。
 
-使用 DISTINCT 可以让汇总函数值汇总不同的值。
+使用 DISTINCT 可以汇总不同的值。
 
 ```sql
 SELECT AVG(DISTINCT col1) AS avg_col
@@ -288,7 +303,7 @@ FROM mytable;
 | LENGTH() | 长度 |
 | SOUNDEX() | 转换为语音值 |
 
-其中， **SOUNDEX()**  可以将一个字符串转换为描述其语音表示的字母数字模式。
+其中，  **SOUNDEX()**   可以将一个字符串转换为描述其语音表示的字母数字模式。
 
 ```sql
 SELECT *
@@ -298,28 +313,29 @@ WHERE SOUNDEX(col1) = SOUNDEX('apple')
 
 ## 日期和时间处理
 
+
 - 日期格式：YYYY-MM-DD
-- 时间格式：HH:MM:SS
+- 时间格式：HH:\<zero-width space\>MM:SS
 
 |函 数 | 说 明|
 | :---: | :---: |
-| AddDate() | 增加一个日期（天、周等）|
-| AddTime() | 增加一个时间（时、分等）|
-| CurDate() | 返回当前日期 |
-| CurTime() | 返回当前时间 |
-| Date() |返回日期时间的日期部分|
-| DateDiff() |计算两个日期之差|
-| Date_Add() |高度灵活的日期运算函数|
-| Date_Format() |返回一个格式化的日期或时间串|
-| Day()| 返回一个日期的天数部分|
-| DayOfWeek() |对于一个日期，返回对应的星期几|
-| Hour() |返回一个时间的小时部分|
-| Minute() |返回一个时间的分钟部分|
-| Month() |返回一个日期的月份部分|
-| Now() |返回当前日期和时间|
-| Second() |返回一个时间的秒部分|
-| Time() |返回一个日期时间的时间部分|
-| Year() |返回一个日期的年份部分|
+| ADDDATE() | 增加一个日期（天、周等）|
+| ADDTIME() | 增加一个时间（时、分等）|
+| CURDATE() | 返回当前日期 |
+| CURTIME() | 返回当前时间 |
+| DATE() |返回日期时间的日期部分|
+| DATEDIFF() |计算两个日期之差|
+| DATE_ADD() |高度灵活的日期运算函数|
+| DATE_FORMAT() |返回一个格式化的日期或时间串|
+| DAY()| 返回一个日期的天数部分|
+| DAYOFWEEK() |对于一个日期，返回对应的星期几|
+| HOUR() |返回一个时间的小时部分|
+| MINUTE() |返回一个时间的分钟部分|
+| MONTH() |返回一个日期的月份部分|
+| NOW() |返回当前日期和时间|
+| SECOND() |返回一个时间的秒部分|
+| TIME() |返回一个日期时间的时间部分|
+| YEAR() |返回一个日期的年份部分|
 
 ```sql
 mysql> SELECT NOW();
@@ -345,7 +361,7 @@ mysql> SELECT NOW();
 
 # 十三、分组
 
-分组就是把具有相同的数据值的行放在同一组中。
+把具有相同的数据值的行放在同一组中。
 
 可以对同一分组数据使用汇总函数进行处理，例如求分组数据的平均值等。
 
@@ -433,8 +449,6 @@ FROM tablea AS A, tableb AS B
 WHERE A.key = B.key;
 ```
 
-在没有条件语句的情况下返回笛卡尔积。
-
 ## 自连接
 
 自连接可以看成内连接的一种，只是连接的表是自身而已。
@@ -479,7 +493,7 @@ FROM tablea AS A NATURAL JOIN tableb AS B;
 检索所有顾客的订单信息，包括还没有订单信息的顾客。
 
 ```sql
-SELECT Customers.cust_id, Orders.order_num
+SELECT Customers.cust_id, Customer.cust_name, Orders.order_id
 FROM Customers LEFT OUTER JOIN Orders
 ON Customers.cust_id = Orders.cust_id;
 ```
@@ -513,7 +527,7 @@ orders 表：
 
 # 十六、组合查询
 
-使用  **UNION**  来组合两个查询，如果第一个查询返回 M 行，第二个查询返回 N 行，那么组合查询的结果一般为 M+N 行。
+使用   **UNION**   来组合两个查询，如果第一个查询返回 M 行，第二个查询返回 N 行，那么组合查询的结果一般为 M+N 行。
 
 每个查询必须包含相同的列、表达式和聚集函数。
 
@@ -659,7 +673,7 @@ MySQL 不允许在触发器中使用 CALL 语句，也就是不能调用存储�
 
 MySQL 的事务提交默认是隐式提交，每执行一条语句就把这条语句当成一个事务然后进行提交。当出现 START TRANSACTION 语句时，会关闭隐式提交；当 COMMIT 或 ROLLBACK 语句执行后，事务会自动关闭，重新恢复隐式提交。
 
-通过设置 autocommit 为 0 可以取消自动提交；autocommit 标记是针对每个连接而不是针对服务器的。
+设置 autocommit 为 0 可以取消自动提交；autocommit 标记是针对每个连接而不是针对服务器的。
 
 如果没有设置保留点，ROLLBACK 会回退到 START TRANSACTION 语句处；如果设置了保留点，并且在 ROLLBACK 中指定该保留点，则会回退到该保留点。
 
@@ -706,7 +720,7 @@ USE mysql;
 SELECT user FROM user;
 ```
 
-**创建账户** 
+**创建账户**  
 
 新创建的账户没有任何权限。
 
@@ -714,25 +728,25 @@ SELECT user FROM user;
 CREATE USER myuser IDENTIFIED BY 'mypassword';
 ```
 
-**修改账户名** 
+**修改账户名**  
 
 ```sql
-RENAME myuser TO newuser;
+RENAME USER myuser TO newuser;
 ```
 
-**删除账户** 
+**删除账户**  
 
 ```sql
 DROP USER myuser;
 ```
 
-**查看权限** 
+**查看权限**  
 
 ```sql
 SHOW GRANTS FOR myuser;
 ```
 
-**授予权限** 
+**授予权限**  
 
 账户用 username@host 的形式定义，username@% 使用的是默认主机名。
 
@@ -740,7 +754,7 @@ SHOW GRANTS FOR myuser;
 GRANT SELECT, INSERT ON mydatabase.* TO myuser;
 ```
 
-**删除权限** 
+**删除权限**  
 
 GRANT 和 REVOKE 可在几个层次上控制访问权限：
 
@@ -754,9 +768,9 @@ GRANT 和 REVOKE 可在几个层次上控制访问权限：
 REVOKE SELECT, INSERT ON mydatabase.* FROM myuser;
 ```
 
-**更改密码** 
+**更改密码**  
 
-必须使用 Password() 函数
+必须使用 Password() 函数进行加密。
 
 ```sql
 SET PASSWROD FOR myuser = Password('new_password');
